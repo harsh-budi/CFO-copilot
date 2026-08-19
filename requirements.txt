@@ -1,0 +1,10 @@
+openai
+langchain
+langchain-openai
+langchain-community
+chromadb
+streamlit
+pandas
+python-dotenv
+tiktoken
+plotly
