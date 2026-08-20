@@ -5,6 +5,10 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts'))
 
+# Auto-build vector store on startup (critical for Streamlit Cloud)
+from startup import ensure_vector_store
+ensure_vector_store()
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
