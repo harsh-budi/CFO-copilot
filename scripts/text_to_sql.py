@@ -2,16 +2,19 @@ import sqlite3
 import pandas as pd
 from openai import OpenAI
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 client = OpenAI()
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ── Load P&L data into an in-memory SQLite database ──────────
 # In-memory means the database exists only while the script runs.
 # It is re-created every time from the CSV — always fresh data.
 def get_db_connection():
     conn = sqlite3.connect(':memory:')
-    df = pd.read_csv('data/financials/pl_actuals.csv')
+    csv_path = os.path.join(BASE_DIR, 'data', 'financials', 'pl_actuals.csv')
+    df = pd.read_csv(csv_path)
     df.to_sql('financials', conn, index=False, if_exists='replace')
     return conn
 

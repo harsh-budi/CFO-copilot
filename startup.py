@@ -37,10 +37,9 @@ def _build_vector_store():
     import os
 
     docs = []
-    doc_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        'data', 'documents'
-    )
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    doc_dir = os.path.join(BASE_DIR, 'data', 'documents')
+    
 
     if not os.path.exists(doc_dir):
         print(f"Documents folder not found at {doc_dir}")
