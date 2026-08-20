@@ -153,54 +153,54 @@ if user_input:
         # Show chart for SQL results with multiple rows
     if chart_data is not None:
         try:
-                if len(chart_data) > 1:
-                    df_chart = chart_data.copy()
-                    x_col = df_chart.columns[0]  # first column is always the category
+            if len(chart_data) > 1:
+                df_chart = chart_data.copy()
+                x_col = df_chart.columns[0]  # first column is always the category
 
             # Check if both actual and budget columns exist
             # → grouped bar chart showing actual vs budget side by side
-                    if 'actual' in df_chart.columns and 'budget' in df_chart.columns:
-                        fig = px.bar(
-                            df_chart.melt(
-                                id_vars=[x_col],
-                                value_vars=['actual', 'budget'],
-                                var_name='Type',
-                                value_name='Amount'
-                            ),
-                            x=x_col,
-                            y='Amount',
-                            color='Type',
-                            barmode='group',
-                            title=user_input[:60],
-                            color_discrete_map={
-                                'actual': '#185FA5',
-                                'budget': '#6BAED6'
-                            },
-                            labels={'Amount': 'Revenue ($)', x_col: x_col.title()}
-                        )
+                if 'actual' in df_chart.columns and 'budget' in df_chart.columns:
+                    fig = px.bar(
+                        df_chart.melt(
+                            id_vars=[x_col],
+                            value_vars=['actual', 'budget'],
+                            var_name='Type',
+                            value_name='Amount'
+                        ),
+                        x=x_col,
+                        y='Amount',
+                        color='Type',
+                        barmode='group',
+                        title=user_input[:60],
+                        color_discrete_map={
+                            'actual': '#185FA5',
+                            'budget': '#6BAED6'
+                        },
+                        labels={'Amount': 'Revenue ($)', x_col: x_col.title()}
+                    )
                         # Add variance % as text annotation if column exists
-                        if 'variance_pct' in df_chart.columns:
-                            for i, row in df_chart.iterrows():
-                                color = '#27500A' if row['variance_pct'] >= 0 else '#791F1F'
-                                fig.add_annotation(
-                                    x=row[x_col],
-                                    y=max(row['actual'], row['budget']) * 1.03,
-                                    text=f"{row['variance_pct']:+.1f}%",
-                                    showarrow=False,
-                                    font=dict(size=11, color=color),
-                                    xref='x', yref='y'
-                                )
-                        fig.update_layout(legend_title_text='')
-                        st.plotly_chart(fig, use_container_width=True)
+                    if 'variance_pct' in df_chart.columns:
+                        for i, row in df_chart.iterrows():
+                             color = '#27500A' if row['variance_pct'] >= 0 else '#791F1F'
+                            fig.add_annotation(
+                                x=row[x_col],
+                                y=max(row['actual'], row['budget']) * 1.03,
+                                text=f"{row['variance_pct']:+.1f}%",
+                                showarrow=False,
+                                font=dict(size=11, color=color),
+                                xref='x', yref='y'
+                            )
+                    fig.update_layout(legend_title_text='')
+                    st.plotly_chart(fig, use_container_width=True)
 
             # Check if variance_pct column exists alone
             # → single bar chart colored by positive/negative variance
-                    elif 'variance_pct' in df_chart.columns:
-                        df_chart['color'] = df_chart['variance_pct'].apply(
-                            lambda v: 'Above Budget' if v >= 0 else 'Below Budget'
-                        )
-                        fig = px.bar(
-                            df_chart,
+                elif 'variance_pct' in df_chart.columns:
+                    df_chart['color'] = df_chart['variance_pct'].apply(
+                        lambda v: 'Above Budget' if v >= 0 else 'Below Budget'
+                    )
+                    fig = px.bar(
+                        df_chart,
                         x=x_col,
                         y='variance_pct',
                         color='color',
