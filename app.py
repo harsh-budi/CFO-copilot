@@ -181,7 +181,7 @@ if user_input:
                         # Add variance % as text annotation if column exists
                     if 'variance_pct' in df_chart.columns:
                         for i, row in df_chart.iterrows():
-                             color = '#27500A' if row['variance_pct'] >= 0 else '#791F1F'
+                            color = '#27500A' if row['variance_pct'] >= 0 else '#791F1F'
                             fig.add_annotation(
                                 x=row[x_col],
                                 y=max(row['actual'], row['budget']) * 1.03,
