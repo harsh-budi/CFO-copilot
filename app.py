@@ -1,8 +1,14 @@
+import logging
+logging.getLogger('streamlit').setLevel(logging.ERROR)
+
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts'))
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import sqlite3, sys, os
-sys.path.insert(0, 'scripts')
+import sqlite3
 
 from rag_pipeline import build_rag_chain
 from text_to_sql import run_sql_query
@@ -141,16 +147,83 @@ if user_input:
         st.caption(f"Source: {source} · Route: {route.upper()}")
 
         # Show chart for SQL results with multiple rows
-        if chart_data is not None:
-            try:
-                if len(chart_data) > 1 and len(chart_data.columns) >= 2:
-                    fig = px.bar(chart_data, x=chart_data.columns[0],
-                                 y=chart_data.columns[1],
-                                 title=user_input[:60],
-                                 color_discrete_sequence=['#185FA5'])
+    if chart_data is not None:
+        try:
+                if len(chart_data) > 1:
+                    df_chart = chart_data.copy()
+                    x_col = df_chart.columns[0]  # first column is always the category
+
+            # Check if both actual and budget columns exist
+            # → grouped bar chart showing actual vs budget side by side
+                    if 'actual' in df_chart.columns and 'budget' in df_chart.columns:
+                        fig = px.bar(
+                            df_chart.melt(
+                                id_vars=[x_col],
+                                value_vars=['actual', 'budget'],
+                                var_name='Type',
+                                value_name='Amount'
+                            ),
+                            x=x_col,
+                            y='Amount',
+                            color='Type',
+                            barmode='group',
+                            title=user_input[:60],
+                            color_discrete_map={
+                                'actual': '#185FA5',
+                                'budget': '#6BAED6'
+                            },
+                            labels={'Amount': 'Revenue ($)', x_col: x_col.title()}
+                        )
+                        # Add variance % as text annotation if column exists
+                        if 'variance_pct' in df_chart.columns:
+                            for i, row in df_chart.iterrows():
+                                color = '#27500A' if row['variance_pct'] >= 0 else '#791F1F'
+                                fig.add_annotation(
+                                    x=row[x_col],
+                                    y=max(row['actual'], row['budget']) * 1.03,
+                                    text=f"{row['variance_pct']:+.1f}%",
+                                    showarrow=False,
+                                    font=dict(size=11, color=color),
+                                    xref='x', yref='y'
+                                )
+                        fig.update_layout(legend_title_text='')
+                        st.plotly_chart(fig, use_container_width=True)
+
+            # Check if variance_pct column exists alone
+            # → single bar chart colored by positive/negative variance
+                    elif 'variance_pct' in df_chart.columns:
+                        df_chart['color'] = df_chart['variance_pct'].apply(
+                            lambda v: 'Above Budget' if v >= 0 else 'Below Budget'
+                        )
+                        fig = px.bar(
+                            df_chart,
+                        x=x_col,
+                        y='variance_pct',
+                        color='color',
+                        title=user_input[:60],
+                        color_discrete_map={
+                        'Above Budget': '#1D9E75',
+                        'Below Budget': '#D85A30'
+                        },
+                        labels={'variance_pct': 'Variance (%)', x_col: x_col.title()}
+                    )
+                    fig.add_hline(y=0, line_dash='dash', line_color='gray')
                     st.plotly_chart(fig, use_container_width=True)
-            except:
-                pass
+
+            # Default fallback → simple bar chart with first numeric column
+                else:
+                    numeric_cols = df_chart.select_dtypes(include='number').columns
+                    if len(numeric_cols) > 0:
+                        fig = px.bar(
+                            df_chart,
+                            x=x_col,
+                            y=numeric_cols[0],
+                            title=user_input[:60],
+                            color_discrete_sequence=['#185FA5']
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            pass
 
     # Save assistant message to history
     st.session_state.messages.append({
